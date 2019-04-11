@@ -1,6 +1,15 @@
 ### 这个程序用于解决局域网中的几台电脑、手机之间临时性互相传送文件问题
 编译安装：
+
+使用`go`编译：
 `go get github.com/rocket049/fileserver`
+
+直接下载可执行程序：
+[[https://github.com/rocket049/fileserver/releases](https://github.com/rocket049/fileserver/releases)
+]([https://github.com/rocket049/fileserver/releases](https://github.com/rocket049/fileserver/releases)
+)
+
+下载解压后，把可执行程序移动到 `PATH` 中使用。
 
 参数：
 
