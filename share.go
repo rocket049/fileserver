@@ -22,6 +22,8 @@ func (s *shareDir) GetRealPath(path1 string) string {
 	return path.Join(s.dir, path1)
 }
 
+var fileServ http.Handler
+
 //GetType 0-not exist,1-file,2-dir
 func (s *shareDir) GetType(realPath string) int {
 	if strings.HasPrefix(realPath, "../") || strings.Contains(realPath, "/..") {
@@ -45,12 +47,14 @@ func (s *shareDir) ListDir(realPath string) []dirItem {
 	res := []dirItem{}
 	var typ string
 	for i, v := range infos {
+		tail := ""
 		if v.IsDir() {
 			typ = "D"
+			tail = "/"
 		} else {
 			typ = "F"
 		}
-		res = append(res, dirItem{i + 1, v.Name(), typ})
+		res = append(res, dirItem{i + 1, v.Name() + tail, typ})
 	}
 	return res
 }
@@ -63,9 +67,11 @@ const lenShareBase = len(shareBase)
 func setShareDir(dir string) {
 	http.HandleFunc(shareBase, handleShare)
 	share = &shareDir{dir}
+	//fileServ = http.StripPrefix(shareBase, http.FileServer(http.Dir(dir)))
 }
 
 func handleShare(w http.ResponseWriter, r *http.Request) {
+	//fileServ.ServeHTTP(w, r)
 	realPath := share.GetRealPath(r.URL.Path[lenShareBase:])
 	switch share.GetType(realPath) {
 	case 0:
@@ -86,5 +92,4 @@ func handleShare(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		t.Execute(w, data)
 	}
-
 }
