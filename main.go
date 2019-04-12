@@ -24,7 +24,7 @@ func showAddr() {
 		if err != nil {
 			panic(err)
 		}
-		for _, addr := range addrs {
+		for i, addr := range addrs {
 			if strings.HasPrefix(addr.String(), "127.") {
 				continue
 			} else if strings.Contains(addr.String(), ":") {
@@ -36,7 +36,7 @@ func showAddr() {
 				if err != nil {
 					panic(err)
 				}
-				png := filepath.Join(dir1, "fileserver.png")
+				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d.png", i))
 				qrcode.WriteFile(fmt.Sprintf("http://%s:6868/index", vs[0]), qrcode.Highest, 400, png)
 				open.Start(png)
 			}
