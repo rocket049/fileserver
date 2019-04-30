@@ -37,6 +37,7 @@ func showAddr() {
 					panic(err)
 				}
 				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d.png", i))
+				fmt.Println(png)
 				qrcode.WriteFile(fmt.Sprintf("http://%s:6868/index", vs[0]), qrcode.Highest, 400, png)
 				open.Start(png)
 			}
