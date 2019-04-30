@@ -19,7 +19,7 @@ func showAddr() {
 	if err != nil {
 		panic(err)
 	}
-	for _, if1 := range ifs {
+	for n, if1 := range ifs {
 		addrs, err := if1.Addrs()
 		if err != nil {
 			panic(err)
@@ -36,7 +36,7 @@ func showAddr() {
 				if err != nil {
 					panic(err)
 				}
-				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d.png", i))
+				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d-%d.png", n, i))
 				fmt.Println(png)
 				qrcode.WriteFile(fmt.Sprintf("http://%s:6868/index", vs[0]), qrcode.Highest, 400, png)
 				open.Start(png)
