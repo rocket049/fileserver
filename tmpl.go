@@ -12,7 +12,7 @@ const tmplDir string = `<html>
 </body>
 </html>
 `
-const tmplUpload = `<head>
+const tmplUpload = `<html><head>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8"/>
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
 	<title>上传文件</title>
@@ -30,7 +30,7 @@ const tmplUpload = `<head>
 </body>
 </html>`
 
-const mainPage = `<head>
+const mainPage = `<html><head>
 	<meta http-equiv="content-type" content="text/html;charset=utf-8"/>
 	<meta name="viewport" content="width=device-width,initial-scale=1.0">
 	<title>分享和上传文件</title>
