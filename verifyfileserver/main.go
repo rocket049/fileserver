@@ -3,6 +3,8 @@ package main
 import (
 	"crypto/sha256"
 	"fmt"
+	"io"
+	"mime"
 	"os"
 	"path/filepath"
 
@@ -97,7 +99,20 @@ func getSize(filename string) int64 {
 
 func sendFile(ctx iris.Context, filename string) {
 	fname := realatePath("files", filename)
-	ctx.SendFile(fname, filename)
+	//ctx.SendFile(fname, filename)
+	typ := mime.TypeByExtension(".zip")
+	fp, err := os.Open(fname)
+	if err != nil {
+		ctx.StatusCode(404)
+		return
+	}
+	defer fp.Close()
+	info, _ := fp.Stat()
+	ctx.Header("Content-Type", typ)
+	ctx.Header("Content-Length", fmt.Sprint(info.Size()))
+	ctx.Header("Content-disposition", "attachment; filename="+filename)
+	ctx.StatusCode(200)
+	io.Copy(ctx.ResponseWriter(), fp)
 }
 
 func main() {
