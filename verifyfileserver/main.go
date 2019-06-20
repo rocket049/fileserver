@@ -2,11 +2,11 @@ package main
 
 import (
 	"crypto/sha256"
+	"flag"
 	"fmt"
-	"io"
-	"mime"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/kataras/iris"
 
@@ -100,22 +100,21 @@ func getSize(filename string) int64 {
 func sendFile(ctx iris.Context, filename string) {
 	fname := realatePath("files", filename)
 	//ctx.SendFile(fname, filename)
-	typ := mime.TypeByExtension(".zip")
-	fp, err := os.Open(fname)
+	//typ := mime.TypeByExtension(".zip")
+	info, err := os.Stat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
 		return
 	}
-	defer fp.Close()
-	info, _ := fp.Stat()
-	ctx.Header("Content-Type", typ)
+
 	ctx.Header("Content-Length", fmt.Sprint(info.Size()))
-	ctx.Header("Content-disposition", "attachment; filename="+filename)
-	ctx.StatusCode(200)
-	io.Copy(ctx.ResponseWriter(), fp)
+	ctx.SendFile(fname, filename)
 }
 
 func main() {
+	var addr = flag.String("addr", ":8080", "format [IP:Port]")
+	flag.Parse()
+
 	app := iris.New()
 
 	server := new(myServer)
@@ -141,7 +140,7 @@ func main() {
 		}
 	})
 
-	app.Get("/{key}", func(ctx iris.Context) {
+	app.Get("/down/{key}", func(ctx iris.Context) {
 		key := ctx.Params().Get("key")
 		kw := fmt.Sprintf("%x", sha256.Sum256([]byte(key)))
 		if server.CheckKey(kw) {
@@ -164,5 +163,14 @@ func main() {
 		}
 	})
 
-	app.Run(iris.Addr(":8080"))
+	app.Get("/{key}", func(ctx iris.Context) {
+		fn := strings.TrimSpace(ctx.Params().Get("key"))
+		ctx.ServeFile(realatePath("files", fn), ctx.ClientSupportsGzip())
+	})
+
+	app.Get("/", func(ctx iris.Context) {
+		ctx.ServeFile(realatePath("files", "index.html"), ctx.ClientSupportsGzip())
+	})
+
+	app.Run(iris.Addr(*addr))
 }
