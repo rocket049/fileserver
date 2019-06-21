@@ -1,0 +1,5 @@
+verify-uselistorder-6.0: <stdin>: error: Could not open input file: Bad file descriptor
+Now listening on: http://localhost:8080
+Application started. Press CTRL+C to shut down.
+2019/06/21 10:43:17 127.0.0.1 Get secret-diary-win64.zip
+[31m[ERRO][0m 2019/06/21 10:43 http: Server closed

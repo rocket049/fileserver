@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -126,13 +127,19 @@ func main() {
 		if server.IsVerified(ctx) {
 			switch pkg {
 			case "win32":
-				sendFile(ctx, "secret-diary-win32.zip")
+				name := "secret-diary-win32.zip"
+				sendFile(ctx, name)
+				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
 
 			case "win64":
-				sendFile(ctx, "secret-diary-win64.zip")
+				name := "secret-diary-win64.zip"
+				sendFile(ctx, name)
+				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
 
 			case "linux":
-				sendFile(ctx, "secret-diary-ubuntu_amd64.zip")
+				name := "secret-diary-ubuntu_amd64.zip"
+				sendFile(ctx, name)
+				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
 
 			}
 		} else {
@@ -146,6 +153,7 @@ func main() {
 		if server.CheckKey(kw) {
 			server.SetVerified(ctx, true)
 			ctx.WriteString(homepage)
+			log.Printf("%s IP: %s\n", key, ctx.RemoteAddr())
 		} else {
 			server.SetVerified(ctx, false)
 			ctx.StatusCode(404)
