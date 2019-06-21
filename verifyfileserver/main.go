@@ -129,17 +129,17 @@ func main() {
 			case "win32":
 				name := "secret-diary-win32.zip"
 				sendFile(ctx, name)
-				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
+				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
 
 			case "win64":
 				name := "secret-diary-win64.zip"
 				sendFile(ctx, name)
-				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
+				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
 
 			case "linux":
 				name := "secret-diary-ubuntu_amd64.zip"
 				sendFile(ctx, name)
-				log.Printf("%s Get %s\n", ctx.RemoteAddr(), name)
+				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
 
 			}
 		} else {
@@ -174,10 +174,12 @@ func main() {
 	app.Get("/{key}", func(ctx iris.Context) {
 		fn := strings.TrimSpace(ctx.Params().Get("key"))
 		ctx.ServeFile(realatePath("files", fn), ctx.ClientSupportsGzip())
+		log.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 	})
 
 	app.Get("/", func(ctx iris.Context) {
 		ctx.ServeFile(realatePath("files", "index.html"), ctx.ClientSupportsGzip())
+		log.Printf("%s Get /\n", ctx.RemoteAddr())
 	})
 
 	app.Run(iris.Addr(*addr))
