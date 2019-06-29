@@ -1,13 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"text/template"
 
 	"github.com/kataras/iris"
 
@@ -15,6 +18,7 @@ import (
 
 	"github.com/kataras/iris/sessions"
 	_ "github.com/mattn/go-sqlite3"
+	md "github.com/russross/blackfriday"
 )
 
 const (
@@ -33,6 +37,17 @@ const (
 </body>
 </html>
 `
+	mdTmpl = `<html>
+<head>
+<meta http-equiv="content-type" content="text/html;charset=utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link type="text/css" rel="stylesheet" href="/style.css"/>
+<title>{{.title}}</title>
+<head>
+<body>
+{{.body}}
+</body>
+</html>`
 )
 
 func realatePath(items ...string) string {
@@ -100,8 +115,6 @@ func getSize(filename string) int64 {
 
 func sendFile(ctx iris.Context, filename string) {
 	fname := realatePath("files", filename)
-	//ctx.SendFile(fname, filename)
-	//typ := mime.TypeByExtension(".zip")
 	info, err := os.Stat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
@@ -110,6 +123,42 @@ func sendFile(ctx iris.Context, filename string) {
 
 	ctx.Header("Content-Length", fmt.Sprint(info.Size()))
 	ctx.SendFile(fname, filename)
+}
+
+func getTitle(p []byte) string {
+	n := bytes.IndexByte(p, '\n')
+	if n <= 0 {
+		return ""
+	}
+	line1 := string(p[0:n])
+	return strings.Trim(line1, "# \n\r\t")
+}
+
+func sendMarkdown(ctx iris.Context, filename string) {
+	data := make(map[string]string)
+
+	file1, err := os.Open(realatePath("files", filename))
+	if err != nil {
+		ctx.StatusCode(404)
+		return
+	}
+	stat1, _ := file1.Stat()
+	var buf []byte = make([]byte, stat1.Size())
+	n, _ := io.ReadFull(file1, buf)
+	file1.Close()
+	if int64(n) == stat1.Size() {
+		data["title"] = getTitle(buf)
+
+		body := md.Run(buf, md.WithExtensions(md.CommonExtensions))
+		data["body"] = string(body)
+
+	} else {
+		ctx.StatusCode(500)
+		return
+	}
+	t := template.New("")
+	t.Parse(mdTmpl)
+	t.Execute(ctx.ResponseWriter(), data)
 }
 
 func main() {
@@ -173,12 +222,17 @@ func main() {
 
 	app.Get("/{key}", func(ctx iris.Context) {
 		fn := strings.TrimSpace(ctx.Params().Get("key"))
-		ctx.ServeFile(realatePath("files", fn), ctx.ClientSupportsGzip())
+		if strings.HasSuffix(strings.ToLower(fn), ".md") {
+			sendMarkdown(ctx, fn)
+		} else {
+			ctx.ServeFile(realatePath("files", fn), ctx.ClientSupportsGzip())
+		}
+
 		log.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 	})
 
 	app.Get("/", func(ctx iris.Context) {
-		ctx.ServeFile(realatePath("files", "index.html"), ctx.ClientSupportsGzip())
+		sendMarkdown(ctx, "index.md")
 		log.Printf("%s Get /\n", ctx.RemoteAddr())
 	})
 
