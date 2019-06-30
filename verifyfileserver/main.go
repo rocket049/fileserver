@@ -220,7 +220,7 @@ func main() {
 		}
 	})
 
-	app.Get("/{key}", func(ctx iris.Context) {
+	app.Get("/{key:path}", func(ctx iris.Context) {
 		fn := strings.TrimSpace(ctx.Params().Get("key"))
 		if strings.HasSuffix(strings.ToLower(fn), ".md") {
 			sendMarkdown(ctx, fn)
