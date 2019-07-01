@@ -3,9 +3,11 @@ package main
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"os"
 	"path/filepath"
@@ -31,9 +33,8 @@ const (
 </head>
 <body>
 <h1>选择对应你的电脑的版本</h1>
-<h2><a href="/get/win32">Windows 32位</a></h2>
-<h2><a href="/get/win64">Windows 64位</a></h2>
-<h2><a href="/get/linux">Linux amd64</a></h2>
+{{range .}}<h2><a href="/get/{{.Pkg}}">{{.Name}}</a></h2>
+{{end}}
 </body>
 </html>
 `
@@ -58,8 +59,9 @@ func realatePath(items ...string) string {
 }
 
 type myServer struct {
-	db   *sql.DB
-	sess *sessions.Sessions
+	db    *sql.DB
+	sess  *sessions.Sessions
+	files map[string][]string
 }
 
 func (s *myServer) Init() error {
@@ -70,7 +72,51 @@ func (s *myServer) Init() error {
 		return err
 	}
 	_, err = s.db.Exec("create table if not exists keys (keyword text unique,time int);")
-	return err
+	if err != nil {
+		return err
+	}
+
+	s.files = make(map[string][]string)
+	jsonData, err := ioutil.ReadFile(realatePath("files.json"))
+	if err != nil {
+		return err
+	}
+	err = json.Unmarshal(jsonData, &s.files)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *myServer) ServePkg(ctx iris.Context, pkg string) {
+	filename, ok := s.files[pkg]
+	if ok {
+		sendFile(ctx, filename[0])
+		log.Printf("%s Down %s\n", ctx.RemoteAddr(), filename[0])
+	} else {
+		log.Printf("%s ERR %s\n", ctx.RemoteAddr(), pkg)
+	}
+}
+
+type PageItem struct {
+	Pkg  string
+	Name string
+}
+
+func (s *myServer) ShowPkgs(ctx iris.Context) error {
+	var items = make([]PageItem, len(s.files))
+	i := 0
+	for k, v := range s.files {
+		items[i].Pkg = k
+		items[i].Name = v[1]
+		i++
+	}
+	t := template.New("")
+	t, err := t.Parse(homepage)
+	if err != nil {
+		return err
+	}
+	return t.Execute(ctx.ResponseWriter(), items)
 }
 
 func (s *myServer) Close() {
@@ -168,29 +214,13 @@ func main() {
 	app := iris.New()
 
 	server := new(myServer)
-	server.Init()
+	log.Println(server.Init())
 	defer server.Close()
 
 	app.Get("/get/{pkg}", func(ctx iris.Context) {
 		pkg := ctx.Params().Get("pkg")
 		if server.IsVerified(ctx) {
-			switch pkg {
-			case "win32":
-				name := "secret-diary-win32.zip"
-				sendFile(ctx, name)
-				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
-
-			case "win64":
-				name := "secret-diary-win64.zip"
-				sendFile(ctx, name)
-				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
-
-			case "linux":
-				name := "secret-diary-ubuntu_amd64.zip"
-				sendFile(ctx, name)
-				log.Printf("%s Down %s\n", ctx.RemoteAddr(), name)
-
-			}
+			server.ServePkg(ctx, pkg)
 		} else {
 			ctx.StatusCode(404)
 		}
@@ -201,7 +231,7 @@ func main() {
 		kw := fmt.Sprintf("%x", sha256.Sum256([]byte(key)))
 		if server.CheckKey(kw) {
 			server.SetVerified(ctx, true)
-			ctx.WriteString(homepage)
+			server.ShowPkgs(ctx)
 			log.Printf("%s IP: %s\n", key, ctx.RemoteAddr())
 		} else {
 			server.SetVerified(ctx, false)
