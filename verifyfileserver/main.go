@@ -38,7 +38,9 @@ const (
 </body>
 </html>
 `
-	mdTmpl = `<html>
+)
+
+var mdTmpl = `<html>
 <head>
 <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
@@ -49,9 +51,8 @@ const (
 {{.body}}
 </body>
 </html>`
-)
 
-func realatePath(items ...string) string {
+func relatePath(items ...string) string {
 	exe1, _ := os.Executable()
 	base := filepath.Dir(exe1)
 	paths := append([]string{base}, items...)
@@ -64,10 +65,19 @@ type myServer struct {
 	files map[string][]string
 }
 
+func initMdTmpl() {
+	tpl, err := ioutil.ReadFile(relatePath("md.tpl"))
+	if err != nil {
+		return
+	} else {
+		mdTmpl = string(tpl)
+	}
+}
+
 func (s *myServer) Init() error {
 	var err error
 	s.sess = sessions.New(sessions.Config{Cookie: cookieNameForSessionID})
-	s.db, err = sql.Open("sqlite3", realatePath("keys.db"))
+	s.db, err = sql.Open("sqlite3", relatePath("keys.db"))
 	if err != nil {
 		return err
 	}
@@ -77,7 +87,7 @@ func (s *myServer) Init() error {
 	}
 
 	s.files = make(map[string][]string)
-	jsonData, err := ioutil.ReadFile(realatePath("files.json"))
+	jsonData, err := ioutil.ReadFile(relatePath("files.json"))
 	if err != nil {
 		return err
 	}
@@ -160,7 +170,7 @@ func getSize(filename string) int64 {
 }
 
 func sendFile(ctx iris.Context, filename string) {
-	fname := realatePath("files", filename)
+	fname := relatePath("files", filename)
 	info, err := os.Stat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
@@ -183,7 +193,7 @@ func getTitle(p []byte) string {
 func sendMarkdown(ctx iris.Context, filename string) {
 	data := make(map[string]string)
 
-	file1, err := os.Open(realatePath("files", filename))
+	file1, err := os.Open(relatePath("files", filename))
 	if err != nil {
 		ctx.StatusCode(404)
 		return
@@ -216,6 +226,8 @@ func main() {
 	server := new(myServer)
 	log.Println(server.Init())
 	defer server.Close()
+
+	initMdTmpl()
 
 	app.Get("/get/{pkg}", func(ctx iris.Context) {
 		pkg := ctx.Params().Get("pkg")
@@ -255,7 +267,7 @@ func main() {
 		if strings.HasSuffix(strings.ToLower(fn), ".md") {
 			sendMarkdown(ctx, fn)
 		} else {
-			ctx.ServeFile(realatePath("files", fn), ctx.ClientSupportsGzip())
+			ctx.ServeFile(relatePath("files", fn), ctx.ClientSupportsGzip())
 		}
 
 		log.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)

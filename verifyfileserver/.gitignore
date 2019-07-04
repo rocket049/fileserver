@@ -2,4 +2,6 @@
 keys.db
 verifyfileserver
 files.json
+*.zip
+*.tpl
 
