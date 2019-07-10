@@ -53,13 +53,18 @@ var mdTmpl = `<html>
 </body>
 </html>`
 
-var logger *syslog.Writer
+var logger *log.Logger
 
 func relatePath(items ...string) string {
 	exe1, _ := os.Executable()
 	base := filepath.Dir(exe1)
 	paths := append([]string{base}, items...)
-	return filepath.Join(paths...)
+	res := filepath.Join(paths...)
+	if strings.Contains(res, "..") {
+		return "404"
+	}
+	return res
+
 }
 
 type myServer struct {
@@ -104,10 +109,15 @@ func (s *myServer) Init() error {
 func (s *myServer) ServePkg(ctx iris.Context, pkg string) {
 	filename, ok := s.files[pkg]
 	if ok {
-		sendFile(ctx, filename[0])
-		log.Printf("%s Down %s\n", ctx.RemoteAddr(), filename[0])
+		err := sendFile(ctx, filename[0])
+		if err != nil {
+			logger.Printf("ERROR %s\n", err.Error())
+		} else {
+			logger.Printf("%s get %s\n", ctx.RemoteAddr(), filename[0])
+		}
+
 	} else {
-		log.Printf("%s ERR %s\n", ctx.RemoteAddr(), pkg)
+		logger.Printf("ERROR %s get %s\n", ctx.RemoteAddr(), pkg)
 	}
 }
 
@@ -234,7 +244,7 @@ func main() {
 	app := iris.New()
 
 	server := new(myServer)
-	log.Println(server.Init())
+	logger.Println(server.Init())
 	defer server.Close()
 
 	initMdTmpl()
@@ -245,6 +255,7 @@ func main() {
 			server.ServePkg(ctx, pkg)
 		} else {
 			ctx.StatusCode(404)
+			logger.Printf("ERROR 404 get %s\n", pkg)
 		}
 	})
 
