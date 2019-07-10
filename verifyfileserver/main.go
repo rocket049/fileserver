@@ -56,7 +56,12 @@ func relatePath(items ...string) string {
 	exe1, _ := os.Executable()
 	base := filepath.Dir(exe1)
 	paths := append([]string{base}, items...)
-	return filepath.Join(paths...)
+	res := filepath.Join(paths...)
+	if strings.Contains(res, "..") {
+		return "404"
+	}
+	return res
+
 }
 
 type myServer struct {
@@ -174,6 +179,7 @@ func sendFile(ctx iris.Context, filename string) {
 	info, err := os.Stat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
+		log.Printf("File Error:%s", filename)
 		return
 	}
 
