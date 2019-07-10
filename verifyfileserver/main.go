@@ -9,6 +9,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"log/syslog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -51,6 +52,8 @@ var mdTmpl = `<html>
 {{.body}}
 </body>
 </html>`
+
+var logger *syslog.Writer
 
 func relatePath(items ...string) string {
 	exe1, _ := os.Executable()
@@ -169,16 +172,17 @@ func getSize(filename string) int64 {
 	return fh.Size()
 }
 
-func sendFile(ctx iris.Context, filename string) {
+func sendFile(ctx iris.Context, filename string) error {
 	fname := relatePath("files", filename)
 	info, err := os.Stat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
-		return
+		return err
 	}
 
 	ctx.Header("Content-Length", fmt.Sprint(info.Size()))
 	ctx.SendFile(fname, filename)
+	return nil
 }
 
 func getTitle(p []byte) string {
@@ -221,6 +225,12 @@ func main() {
 	var addr = flag.String("addr", ":8080", "format [IP:Port]")
 	flag.Parse()
 
+	logger, err := syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
+	if err != nil {
+		logger = log.New(os.Stdout, "", log.LstdFlags)
+		logger.Println(err.Error())
+	}
+
 	app := iris.New()
 
 	server := new(myServer)
@@ -244,10 +254,11 @@ func main() {
 		if server.CheckKey(kw) {
 			server.SetVerified(ctx, true)
 			server.ShowPkgs(ctx)
-			log.Printf("%s IP: %s\n", key, ctx.RemoteAddr())
+			logger.Printf("down %s IP: %s\n", key, ctx.RemoteAddr())
 		} else {
 			server.SetVerified(ctx, false)
 			ctx.StatusCode(404)
+			logger.Printf("ERROR down %s IP: %s\n", key, ctx.RemoteAddr())
 		}
 
 	})
@@ -267,15 +278,18 @@ func main() {
 		if strings.HasSuffix(strings.ToLower(fn), ".md") {
 			sendMarkdown(ctx, fn)
 		} else {
-			ctx.ServeFile(relatePath("files", fn), ctx.ClientSupportsGzip())
+			err := ctx.ServeFile(relatePath("files", fn), ctx.ClientSupportsGzip())
+			if err != nil {
+				logger.Println("ERROR", err.Error())
+			}
 		}
 
-		log.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
+		logger.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 	})
 
 	app.Get("/", func(ctx iris.Context) {
 		sendMarkdown(ctx, "index.md")
-		log.Printf("%s Get /\n", ctx.RemoteAddr())
+		logger.Printf("%s Get /\n", ctx.RemoteAddr())
 	})
 
 	app.Run(iris.Addr(*addr))
