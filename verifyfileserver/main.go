@@ -9,7 +9,6 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
-	"log/syslog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -235,11 +234,7 @@ func main() {
 	var addr = flag.String("addr", ":8080", "format [IP:Port]")
 	flag.Parse()
 
-	logger, err := syslog.NewLogger(syslog.LOG_INFO, log.LstdFlags)
-	if err != nil {
-		logger = log.New(os.Stdout, "", log.LstdFlags)
-		logger.Println(err.Error())
-	}
+	logger = log.New(os.Stdout, "", log.LstdFlags)
 
 	app := iris.New()
 
@@ -286,16 +281,23 @@ func main() {
 
 	app.Get("/{key:path}", func(ctx iris.Context) {
 		fn := strings.TrimSpace(ctx.Params().Get("key"))
+		if strings.Contains(fn, "..") {
+			logger.Printf("ERROR %s Get /%s\n", ctx.RemoteAddr(), fn)
+			ctx.StatusCode(404)
+			return
+		}
 		if strings.HasSuffix(strings.ToLower(fn), ".md") {
 			sendMarkdown(ctx, fn)
+			logger.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 		} else {
 			err := ctx.ServeFile(relatePath("files", fn), ctx.ClientSupportsGzip())
 			if err != nil {
-				logger.Println("ERROR", err.Error())
+				logger.Printf("ERROR %s Get /%s\n", ctx.RemoteAddr(), fn)
+			} else {
+				logger.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 			}
 		}
 
-		logger.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 	})
 
 	app.Get("/", func(ctx iris.Context) {
