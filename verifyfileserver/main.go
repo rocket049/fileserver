@@ -204,6 +204,31 @@ func getTitle(p []byte) string {
 }
 
 func sendMarkdown(ctx iris.Context, filename string) {
+	fname := relatePath("files", filename)
+	fstat, err := os.Stat(fname)
+	if err != nil {
+		ctx.StatusCode(404)
+		return
+	}
+
+	cacheName := relatePath("files", filename+".htm")
+	cacheStat, err := os.Stat(cacheName)
+	if err == nil {
+		if cacheStat.ModTime().Unix() > fstat.ModTime().Unix() {
+			ctx.ServeFile(cacheName, ctx.ClientSupportsGzip())
+			return
+		}
+	}
+
+	fp, err := os.Create(cacheName)
+	if err != nil {
+		ctx.StatusCode(404)
+		return
+	}
+	defer fp.Close()
+
+	writer := io.MultiWriter(fp, ctx.ResponseWriter())
+
 	data := make(map[string]string)
 
 	file1, err := os.Open(relatePath("files", filename))
@@ -227,7 +252,7 @@ func sendMarkdown(ctx iris.Context, filename string) {
 	}
 	t := template.New("")
 	t.Parse(mdTmpl)
-	t.Execute(ctx.ResponseWriter(), data)
+	t.Execute(writer, data)
 }
 
 func main() {
