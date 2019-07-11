@@ -205,7 +205,7 @@ func getTitle(p []byte) string {
 
 func sendMarkdown(ctx iris.Context, filename string) {
 	fname := relatePath("files", filename)
-	fstat, err := os.Stat(fname)
+	fstat, err := os.Lstat(fname)
 	if err != nil {
 		ctx.StatusCode(404)
 		return
