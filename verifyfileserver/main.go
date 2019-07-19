@@ -330,5 +330,8 @@ func main() {
 		logger.Printf("%s Get /\n", ctx.RemoteAddr())
 	})
 
+	// /github?addr=https://github.com/...
+	app.Get("/github", github)
+
 	app.Run(iris.Addr(*addr))
 }
