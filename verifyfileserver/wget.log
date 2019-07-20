@@ -1,0 +1,24 @@
+--2019-07-20 08:31:03--  https://github.com/visualfc/liteide/releases/download/x36/liteidex36.linux64-qt5.5.1-system.tar.gz
+正在解析主机 github.com (github.com)... 192.30.253.112, 192.30.253.113
+正在连接 github.com (github.com)|192.30.253.112|:443... 已连接。
+已发出 HTTP 请求，正在等待回应... 302 Found
+位置：https://github-production-release-asset-2e65be.s3.amazonaws.com/6753728/d8a6dc00-473a-11e9-8fca-2737dc5ad8ab?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20190720%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20190720T003106Z&X-Amz-Expires=300&X-Amz-Signature=49d06987db47d253639aee79ef467cb6e5d93a9a45f968709fe2037f687f7a65&X-Amz-SignedHeaders=host&actor_id=0&response-content-disposition=attachment%3B%20filename%3Dliteidex36.linux64-qt5.5.1-system.tar.gz&response-content-type=application%2Foctet-stream [跟随至新的 URL]
+--2019-07-20 08:31:07--  https://github-production-release-asset-2e65be.s3.amazonaws.com/6753728/d8a6dc00-473a-11e9-8fca-2737dc5ad8ab?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAIWNJYAX4CSVEH53A%2F20190720%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20190720T003106Z&X-Amz-Expires=300&X-Amz-Signature=49d06987db47d253639aee79ef467cb6e5d93a9a45f968709fe2037f687f7a65&X-Amz-SignedHeaders=host&actor_id=0&response-content-disposition=attachment%3B%20filename%3Dliteidex36.linux64-qt5.5.1-system.tar.gz&response-content-type=application%2Foctet-stream
+正在解析主机 github-production-release-asset-2e65be.s3.amazonaws.com (github-production-release-asset-2e65be.s3.amazonaws.com)... 52.217.39.204
+正在连接 github-production-release-asset-2e65be.s3.amazonaws.com (github-production-release-asset-2e65be.s3.amazonaws.com)|52.217.39.204|:443... 已连接。
+已发出 HTTP 请求，正在等待回应... 200 OK
+长度： 15645480 (15M) [application/octet-stream]
+正在保存至: “STDOUT”
+
+     0K .......... .......... .......... .......... ..........  0% 23.3K 10m55s
+    50K .......... .......... .......... .......... ..........  0% 32.6K 9m19s
+   100K .......... .......... .......... .......... ..........  0% 32.6K 8m46s
+   150K .......... .......... .......... .......... ..........  1% 32.6K 8m29s
+   200K .......... .......... .......... .......... ..........  1% 40.6K 8m0s
+   250K .......... .......... .......... .......... ..........  1% 24.5K 8m21s
+   300K .......... .......... .......... .......... ..........  2% 40.7K 8m0s
+   350K .......... .......... .......... .......... ..........  2% 32.6K 7m56s
+   400K .......... .......... .......... .......... ..........  2% 32.5K 7m52s
+   450K .......... .......... .......... .......... ..........  3% 27.2K 7m58s
+   500K .......... .......... .......... .......... ..........  3% 40.7K 7m46s
+   550K ..........

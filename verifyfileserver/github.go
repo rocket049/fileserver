@@ -3,6 +3,7 @@ package main
 import (
 	"io"
 	"os/exec"
+	"path"
 	"strings"
 
 	"github.com/kataras/iris"
@@ -31,8 +32,17 @@ func github(ctx iris.Context) {
 		return
 	}
 	defer cmd.Process.Kill()
+
+	filename := path.Base(addr[8:])
+	ctx.Header("Content-Disposition", "attachment;filename="+filename)
 	ctx.StatusCode(200)
-	writer := ctx.ResponseWriter()
+	var writer io.Writer
+	if ctx.ClientSupportsGzip() {
+		writer = ctx.GzipResponseWriter()
+	} else {
+		writer = ctx.ResponseWriter()
+	}
+
 	var buf [3000]byte
 	for {
 		n, _ := io.CopyBuffer(writer, stdout, buf[:])
@@ -40,5 +50,6 @@ func github(ctx iris.Context) {
 			break
 		}
 	}
+
 	logger.Println("end", addr)
 }
