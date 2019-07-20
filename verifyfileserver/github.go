@@ -2,7 +2,7 @@ package main
 
 import (
 	"io"
-	"os/exec"
+	"net/http"
 	"path"
 	"strings"
 
@@ -13,25 +13,22 @@ func github(ctx iris.Context) {
 	addr := ctx.URLParam("addr")
 	if strings.HasPrefix(addr, "https://github.com/") == false {
 		logger.Println("reject", addr)
-		return
-	} else {
-		logger.Println("start", addr)
-	}
-	cmd := exec.Command("wget", "-o", "wget.log", "-O", "-", addr)
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		logger.Println(err)
 		ctx.StatusCode(404)
 		return
 	}
-	defer stdout.Close()
-	err = cmd.Start()
+	res, err := http.DefaultClient.Get(addr)
 	if err != nil {
-		logger.Println(err)
+		logger.Println("connect error", addr)
 		ctx.StatusCode(404)
 		return
 	}
-	defer cmd.Process.Kill()
+	defer res.Body.Close()
+	if res.StatusCode == 404 {
+		logger.Println("not found", addr)
+		ctx.StatusCode(404)
+		return
+	}
+	logger.Println("start", addr)
 
 	filename := path.Base(addr[8:])
 	ctx.Header("Content-Disposition", "attachment;filename="+filename)
@@ -45,7 +42,7 @@ func github(ctx iris.Context) {
 
 	var buf [3000]byte
 	for {
-		n, _ := io.CopyBuffer(writer, stdout, buf[:])
+		n, _ := io.CopyBuffer(writer, res.Body, buf[:])
 		if n == 0 {
 			break
 		}
