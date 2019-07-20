@@ -32,13 +32,13 @@ func github(ctx iris.Context) {
 
 	filename := path.Base(addr[8:])
 	ctx.Header("Content-Disposition", "attachment;filename="+filename)
-	ctx.StatusCode(200)
-	var writer io.Writer
-	if ctx.ClientSupportsGzip() {
-		writer = ctx.GzipResponseWriter()
-	} else {
-		writer = ctx.ResponseWriter()
-	}
+	//ctx.StatusCode(200)
+	var writer io.Writer = ctx.ResponseWriter()
+	// if ctx.ClientSupportsGzip() {
+	// 	writer = ctx.GzipResponseWriter()
+	// } else {
+	// 	writer = ctx.ResponseWriter()
+	// }
 
 	var buf [3000]byte
 	for {
