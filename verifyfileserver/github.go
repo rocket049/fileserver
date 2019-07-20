@@ -33,8 +33,9 @@ func github(ctx iris.Context) {
 	defer cmd.Process.Kill()
 	ctx.StatusCode(200)
 	writer := ctx.ResponseWriter()
+	var buf [3000]byte
 	for {
-		n, _ := io.Copy(writer, stdout)
+		n, _ := io.CopyBuffer(writer, stdout, buf[:])
 		if n == 0 {
 			break
 		}
