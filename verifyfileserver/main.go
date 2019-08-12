@@ -45,10 +45,63 @@ var mdTmpl = `<html>
 <meta http-equiv="content-type" content="text/html;charset=utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <link type="text/css" rel="stylesheet" href="/style.css"/>
+<script src="../jquery-3.3.1.min.js"></script>
 <title>{{.title}}</title>
 <head>
 <body>
+<div id="box">
+    <div class="ad">
+        <ul class="slider">
+            <li><img src="images/1.png" /></li>
+            <li><img src="images/2.png" /></li>
+            <li><img src="images/3.png" /></li>
+            <li><img src="images/4.png" /></li>
+            <li><img src="images/5.png" /></li>
+        </ul>
+        <ul class="num">
+            <li>1</li>
+            <li>2</li>
+            <li>3</li>
+            <li>4</li>
+            <li>5</li>
+        </ul>
+    </div>
+</div>
 {{.body}}
+<div style="background:#E8E7E3;padding:20px 0;">
+  <div style="font-size:x-small;text-align:center">备案号：苏ICP备19034936号 &nbsp;&nbsp; 站长邮箱：fuhuizn@163.com</div>
+  <div style="width:300px;margin:0 auto;font-size:x-small;">
+		 		<a target="_blank" href="http://www.beian.gov.cn/portal/registerSystemInfo?recordcode=32050702010684" style="display:inline-block;text-decoration:none;height:20px;line-height:20px;"><img src="/bei-an.png" style="float:left;"/><p style="float:left;height:20px;line-height:20px;margin: 0px 0px 0px 5px; color:black;">苏公网安备 32050702010684号</p></a>
+		 	</div>
+</div>
+<script type="text/javascript">
+	$(function(){
+		var index=0;
+		var len=$(".num>li").length;
+		var timer;
+		$(".num>li").mouseover(function(){
+			index=$(this).index()
+			toggleImg(index)
+		}).eq(0).mouseover()
+		$(".ad").hover(function(){
+			clearInterval(timer)
+		},function(){
+			timer=setInterval(function(){
+				toggleImg(index);
+				index++;
+				if(index==len){
+					index=0;
+				}
+			},2000)
+		}).trigger("mouseleave")
+		
+	})
+	function toggleImg(index){
+		var adHeight=$(".ad").height();
+		$(".slider").stop().animate({"top":-adHeight*index},1000)
+		$(".num li").removeClass("on").eq(index).addClass("on")
+	}
+</script>
 </body>
 </html>`
 
@@ -255,6 +308,10 @@ func sendMarkdown(ctx iris.Context, filename string) {
 	t.Execute(writer, data)
 }
 
+func adRedirect(ctx iris.Context) {
+	ctx.Redirect("https://www.baidu.com/", 302)
+}
+
 func main() {
 	var addr = flag.String("addr", ":8080", "format [IP:Port]")
 	flag.Parse()
@@ -331,7 +388,9 @@ func main() {
 	})
 
 	// /github?addr=https://github.com/...
-	app.Get("/github", github)
+	// app.Get("/github", github)
+
+	app.Get("/redirect", adRedirect)
 
 	app.Run(iris.Addr(*addr))
 }
