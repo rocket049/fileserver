@@ -229,7 +229,7 @@ func sendMarkdown(ctx iris.Context, filename string) {
 
 	writer := io.MultiWriter(fp, ctx.ResponseWriter())
 
-	data := make(map[string]string)
+	data := make(map[string]interface{})
 
 	file1, err := os.Open(relatePath("files", filename))
 	if err != nil {
@@ -246,13 +246,39 @@ func sendMarkdown(ctx iris.Context, filename string) {
 		body := md.Run(buf, md.WithExtensions(md.CommonExtensions))
 		data["body"] = string(body)
 
+		data["ad"], _ = getAdList()
+
 	} else {
 		ctx.StatusCode(500)
 		return
 	}
+	initMdTmpl()
 	t := template.New("")
 	t.Parse(mdTmpl)
 	t.Execute(writer, data)
+}
+
+type AdItem struct {
+	Img  string `json:"img"`
+	Href string `json:"href"`
+	Text string `json:"text"`
+}
+
+func getAdList() ([]AdItem, error) {
+	res := make([]AdItem, 5)
+	jsonFile := relatePath("ad.json")
+	jsonData, err := ioutil.ReadFile(jsonFile)
+	if err != nil {
+		logger.Println(err)
+		return res, err
+	}
+	err = json.Unmarshal(jsonData, &res)
+	if err != nil {
+		logger.Println(err)
+		return res, err
+	}
+
+	return res, nil
 }
 
 func adRedirect(ctx iris.Context) {
