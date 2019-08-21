@@ -9,9 +9,11 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"text/template"
 
 	"github.com/kataras/iris"
@@ -102,6 +104,8 @@ func (s *myServer) Init() error {
 	if err != nil {
 		return err
 	}
+
+	adList, _ = getAdList()
 	return nil
 }
 
@@ -111,12 +115,14 @@ func (s *myServer) ServePkg(ctx iris.Context, pkg string) {
 		err := sendFile(ctx, filename[0])
 		if err != nil {
 			logger.Printf("ERROR %s\n", err.Error())
+			adRedirect(ctx)
 		} else {
 			logger.Printf("%s get %s\n", ctx.RemoteAddr(), filename[0])
 		}
 
 	} else {
 		logger.Printf("ERROR %s get %s\n", ctx.RemoteAddr(), pkg)
+		adRedirect(ctx)
 	}
 }
 
@@ -185,7 +191,8 @@ func sendFile(ctx iris.Context, filename string) error {
 	fname := relatePath("files", filename)
 	info, err := os.Stat(fname)
 	if err != nil {
-		ctx.StatusCode(404)
+		//ctx.StatusCode(404)
+		adRedirect(ctx)
 		return err
 	}
 
@@ -207,7 +214,8 @@ func sendMarkdown(ctx iris.Context, filename string) {
 	fname := relatePath("files", filename)
 	fstat, err := os.Lstat(fname)
 	if err != nil {
-		ctx.StatusCode(404)
+		//ctx.StatusCode(404)
+		adRedirect(ctx)
 		return
 	}
 
@@ -222,7 +230,8 @@ func sendMarkdown(ctx iris.Context, filename string) {
 
 	fp, err := os.Create(cacheName)
 	if err != nil {
-		ctx.StatusCode(404)
+		//ctx.StatusCode(404)
+		adRedirect(ctx)
 		return
 	}
 	defer fp.Close()
@@ -233,7 +242,8 @@ func sendMarkdown(ctx iris.Context, filename string) {
 
 	file1, err := os.Open(relatePath("files", filename))
 	if err != nil {
-		ctx.StatusCode(404)
+		//ctx.StatusCode(404)
+		adRedirect(ctx)
 		return
 	}
 	stat1, _ := file1.Stat()
@@ -245,8 +255,11 @@ func sendMarkdown(ctx iris.Context, filename string) {
 
 		body := md.Run(buf, md.WithExtensions(md.CommonExtensions))
 		data["body"] = string(body)
-
-		data["ad"], _ = getAdList()
+		v, _ := getAdList()
+		data["ad"] = v
+		adLock.Lock()
+		adList = v
+		adLock.Unlock()
 
 	} else {
 		ctx.StatusCode(500)
@@ -263,6 +276,9 @@ type AdItem struct {
 	Href string `json:"href"`
 	Text string `json:"text"`
 }
+
+var adLock sync.RWMutex
+var adList []AdItem
 
 func getAdList() ([]AdItem, error) {
 	res := make([]AdItem, 5)
@@ -282,7 +298,18 @@ func getAdList() ([]AdItem, error) {
 }
 
 func adRedirect(ctx iris.Context) {
-	ctx.Redirect("https://www.baidu.com/", 302)
+	adLock.RLock()
+	defer adLock.RUnlock()
+
+	l := len(adList)
+	if l == 0 {
+		return
+	}
+	rnd := rand.Int()
+	n := rnd % l
+	url := adList[n].Href
+
+	ctx.Redirect(url, 302)
 }
 
 func main() {
@@ -304,7 +331,8 @@ func main() {
 		if server.IsVerified(ctx) {
 			server.ServePkg(ctx, pkg)
 		} else {
-			ctx.StatusCode(404)
+			//ctx.StatusCode(404)
+			adRedirect(ctx)
 			logger.Printf("ERROR 404 get %s\n", pkg)
 		}
 	})
@@ -318,7 +346,8 @@ func main() {
 			logger.Printf("down %s IP: %s\n", key, ctx.RemoteAddr())
 		} else {
 			server.SetVerified(ctx, false)
-			ctx.StatusCode(404)
+			//ctx.StatusCode(404)
+			adRedirect(ctx)
 			logger.Printf("ERROR down %s IP: %s\n", key, ctx.RemoteAddr())
 		}
 
@@ -338,7 +367,8 @@ func main() {
 		fn := strings.TrimSpace(ctx.Params().Get("key"))
 		if strings.Contains(fn, "..") {
 			logger.Printf("ERROR %s Get /%s\n", ctx.RemoteAddr(), fn)
-			ctx.StatusCode(404)
+			//ctx.StatusCode(404)
+			adRedirect(ctx)
 			return
 		}
 		if strings.HasSuffix(strings.ToLower(fn), ".md") {
@@ -348,6 +378,7 @@ func main() {
 			err := ctx.ServeFile(relatePath("files", fn), ctx.ClientSupportsGzip())
 			if err != nil {
 				logger.Printf("ERROR %s Get /%s\n", ctx.RemoteAddr(), fn)
+				adRedirect(ctx)
 			} else {
 				logger.Printf("%s Get /%s\n", ctx.RemoteAddr(), fn)
 			}
@@ -362,8 +393,6 @@ func main() {
 
 	// /github?addr=https://github.com/...
 	// app.Get("/github", github)
-
-	app.Get("/redirect", adRedirect)
 
 	app.Run(iris.Addr(*addr))
 }
