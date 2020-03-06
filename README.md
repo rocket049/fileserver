@@ -25,3 +25,6 @@
 建议：使用另一个小工具 `tray-controller` 控制本程序，方便随时打开和关闭。
  `tray-controller` 的主页：[https://github.com/rocket049/tray-controller](https://github.com/rocket049/tray-controller)
 
+#### 专用图片显示程序
+
+目录红的`showImg`程序是专用图片显示程序，编译后随便链接到到某个包含在`PATH`中的目录就可以被`fileserver`调用。
