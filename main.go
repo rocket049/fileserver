@@ -6,6 +6,7 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 
@@ -31,17 +32,34 @@ func showAddr() {
 				continue
 			} else {
 				vs := strings.Split(addr.String(), "/")
-				fmt.Printf("Access URL: http://%s:6868/index\n", vs[0])
+
 				dir1, err := os.UserCacheDir()
 				if err != nil {
 					panic(err)
 				}
 				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d-%d.png", n, i))
 				fmt.Println(png)
-				qrcode.WriteFile(fmt.Sprintf("http://%s:6868/index", vs[0]), qrcode.Highest, 400, png)
-				open.Start(png)
+				var addr string
+				if strings.Contains(vs[0], ":") {
+					addr = fmt.Sprintf("http://[%s]:6868/index", vs[0])
+				} else {
+					addr = fmt.Sprintf("http://%s:6868/index", vs[0])
+				}
+				fmt.Printf("Access URL: %s\n", addr)
+				qrcode.WriteFile(addr, qrcode.Highest, 400, png)
+				showPng(png, addr)
 			}
 		}
+	}
+}
+
+func showPng(fn, title string) {
+	path1, err := exec.LookPath("showImg")
+	if err != nil {
+		open.Start(fn)
+	} else {
+		cmd := exec.Command(path1, "-t", title, "-f", fn)
+		cmd.Start()
 	}
 }
 

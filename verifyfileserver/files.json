@@ -1,0 +1,4 @@
+{
+	"win32":["secret-diary-win32.zip","Windows版"],
+	"linux":["secret-diary-linux_amd64.zip","Linux版"]
+}
