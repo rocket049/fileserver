@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 )
 
 var uploadDir string
@@ -30,7 +31,7 @@ func handleUpload(w http.ResponseWriter, req *http.Request) {
 				for i := 0; i < len(v); i++ {
 					var filename string
 					for n := 1; true; n++ {
-						filename = fmt.Sprintf("%v-%v", n, v[i].Filename)
+						filename = filepath.Join(uploadDir, fmt.Sprintf("%v-%v", n, v[i].Filename))
 						_, err := os.Stat(filename)
 						if err != nil {
 							break
