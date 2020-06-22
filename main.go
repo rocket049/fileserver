@@ -117,8 +117,7 @@ func main() {
 	setUploadDir(*upload)
 	ips := showAddr()
 
-	c := runDiscover(ips)
-	defer c.Remove("http", 6868, "index")
+	runDiscover(ips)
 
 	go http.ListenAndServe(":6868", nil)
 	ch := make(chan os.Signal)
