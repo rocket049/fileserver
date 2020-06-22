@@ -1,0 +1,28 @@
+language: go
+
+go:
+  - 1.14.x
+
+before_install:
+  - cp -rf ../$(basename $(pwd)) $GOPATH/src
+  - go get -v gitee.com/rocket049/discover-go
+  - go get -v github.com/skratchdot/open-golang/open
+  - go get -v github.com/skip2/go-qrcode
+
+install: true
+
+script:
+  - make build
+  
+before_deploy:
+  - zip -9 fileserver-linux.zip fileserver
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_TOKEN
+  file_glob: true
+  file:
+    - fileserver-linux.zip
+  skip_cleanup: true
+  on:
+    tags: true
