@@ -18,15 +18,15 @@ import (
 	qrcode "github.com/skip2/go-qrcode"
 )
 
-func runDiscover() *discover.DiscoverClient {
-	client := discover.NewClient()
-	ok := client.Append("http", 6868, "index", "FileServer", "share files")
-	if ok == false {
-		server := discover.NewServer()
-		go server.Serve(false)
-		time.Sleep(time.Millisecond * 100)
-		client.Append("http", 6868, "index", "FileServer", "share files")
+func runDiscover(ips []string) *discover.DiscoverClient {
+	server := discover.NewServer()
+	for _, ip := range ips {
+		server.Append("http", ip, 6868, "index", "FileServer", "Share Files")
 	}
+
+	go server.Serve(true)
+	time.Sleep(time.Millisecond * 100)
+	client := discover.NewClient()
 	res := client.Query()
 	fmt.Println("Servers:")
 	for _, v := range res {
@@ -48,11 +48,12 @@ func listServers() {
 	}
 }
 
-func showAddr() {
+func showAddr() []string {
 	ifs, err := net.Interfaces()
 	if err != nil {
 		panic(err)
 	}
+	res := []string{}
 	for n, if1 := range ifs {
 		addrs, err := if1.Addrs()
 		if err != nil {
@@ -75,8 +76,10 @@ func showAddr() {
 				var addr string
 				if strings.Contains(vs[0], ":") {
 					addr = fmt.Sprintf("http://[%s]:6868/index", vs[0])
+					res = append(res, fmt.Sprintf("[%s]", vs[0]))
 				} else {
 					addr = fmt.Sprintf("http://%s:6868/index", vs[0])
+					res = append(res, vs[0])
 				}
 				fmt.Printf("Access URL: %s\n", addr)
 				qrcode.WriteFile(addr, qrcode.Highest, 400, png)
@@ -84,6 +87,7 @@ func showAddr() {
 			}
 		}
 	}
+	return res
 }
 
 func showPng(fn, title string) {
@@ -99,7 +103,7 @@ func showPng(fn, title string) {
 func main() {
 	var share = flag.String("share", ".", "Share files in this DIR")
 	var upload = flag.String("upload", ".", "Upload files to this DIR")
-	var browse = flag.Bool("browse", false, "List server in this lan.")
+	var browse = flag.Bool("list", false, "List server in this lan.")
 	flag.Parse()
 	if *browse {
 		listServers()
@@ -111,9 +115,9 @@ func main() {
 	})
 	setShareDir(*share)
 	setUploadDir(*upload)
-	showAddr()
+	ips := showAddr()
 
-	c := runDiscover()
+	c := runDiscover(ips)
 	defer c.Remove("http", 6868, "index")
 
 	go http.ListenAndServe(":6868", nil)
