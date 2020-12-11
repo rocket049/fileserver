@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"path"
+	"sort"
 	"strings"
 )
 
@@ -40,10 +41,20 @@ func (s *shareDir) GetType(realPath string) int {
 	return 1
 }
 
+func sortDirs(infos []os.FileInfo) []os.FileInfo {
+	sort.Slice(infos, func(i, j int) bool {
+		info1 := infos[i].(os.FileInfo)
+		info2 := infos[j].(os.FileInfo)
+		return strings.Compare(info1.Name(), info2.Name()) == -1
+	})
+	return infos
+}
+
 //ListDir 必须先确定为目录
 func (s *shareDir) ListDir(realPath string) []dirItem {
 	dir1, _ := os.Open(realPath)
 	infos, _ := dir1.Readdir(0)
+	infos = sortDirs(infos)
 	res := []dirItem{}
 	var typ string
 	for i, v := range infos {
