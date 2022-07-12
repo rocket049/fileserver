@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"os/exec"
 	"path/filepath"
 
 	"fyne.io/fyne/v2/app"
@@ -20,6 +21,10 @@ func main() {
 			panic("need picture file")
 		}
 	}
+	cmd1 := exec.Command("sync", p)
+	cmd1.Run()
+	cmd1.Wait()
+
 	app := app.New()
 
 	icon1 := canvas.NewImageFromFile(p)
