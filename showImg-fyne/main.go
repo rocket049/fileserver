@@ -10,19 +10,31 @@ import (
 )
 
 func main() {
+	t := flag.String("t", "", "title of window")
+	f := flag.String("f", "", "picture file name")
 	flag.Parse()
 	p := flag.Arg(0)
 	if p == "" {
-		panic("need picture file")
+		p = *f
+		if p == "" {
+			panic("need picture file")
+		}
 	}
 	app := app.New()
 
 	icon1 := canvas.NewImageFromFile(p)
+
 	icon1.FillMode = canvas.ImageFillOriginal
 
 	box1 := container.NewVBox(icon1)
 
-	w := app.NewWindow(filepath.Base(p))
+	var title string
+	if *t != "" {
+		title = *t
+	} else {
+		title = filepath.Base(p)
+	}
+	w := app.NewWindow(title)
 	w.SetContent(box1)
 
 	w.SetOnClosed(func() {

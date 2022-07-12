@@ -1,2 +1,2 @@
 #!/bin/sh
-go build -o showImage -ldflags "-s -w"
+go build -o showImg -ldflags "-s -w"

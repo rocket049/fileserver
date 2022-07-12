@@ -96,8 +96,14 @@ func showPng(fn, title string) {
 	if err != nil {
 		open.Start(fn)
 	} else {
+		sync1 := exec.Command("sync", fn)
+		sync1.Run()
+		sync1.Wait()
+		//fyne版showImg太快，二维码文件来不及同步到硬盘，因此打开时间延长100毫秒
+		time.Sleep(time.Millisecond * 100)
 		cmd := exec.Command(path1, "-t", title, "-f", fn)
 		cmd.Start()
+		go cmd.Wait()
 	}
 }
 
