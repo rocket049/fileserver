@@ -71,7 +71,8 @@ func showAddr() []string {
 				if err != nil {
 					panic(err)
 				}
-				png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d-%d.png", n, i))
+				//png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d-%d.png", n, i))
+				png := filepath.Join(dir1, fmt.Sprintf("<%d-%d>%s.png", n, i, vs[0]))
 				fmt.Println(png)
 				var addr string
 				if strings.Contains(vs[0], ":") {
