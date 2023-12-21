@@ -8,6 +8,7 @@ import (
 	"fyne.io/fyne/v2/app"
 	"fyne.io/fyne/v2/canvas"
 	"fyne.io/fyne/v2/container"
+	"fyne.io/fyne/v2/widget"
 )
 
 func main() {
@@ -31,7 +32,16 @@ func main() {
 
 	icon1.FillMode = canvas.ImageFillOriginal
 
-	box1 := container.NewVBox(icon1)
+	viewer := widget.NewCard("", "", icon1)
+
+	btReload := widget.NewButton("Reload", func() {
+		icon2 := canvas.NewImageFromFile(p)
+		icon2.FillMode = canvas.ImageFillOriginal
+		viewer.SetContent(icon2)
+		viewer.Refresh()
+	})
+
+	box1 := container.NewVBox(btReload, viewer)
 
 	var title string
 	if *t != "" {
