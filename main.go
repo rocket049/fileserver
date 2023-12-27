@@ -54,12 +54,13 @@ func showAddr() []string {
 		panic(err)
 	}
 	res := []string{}
-	for n, if1 := range ifs {
+	for _, if1 := range ifs {
 		addrs, err := if1.Addrs()
 		if err != nil {
 			panic(err)
 		}
-		for i, addr := range addrs {
+
+		for _, addr := range addrs {
 			if strings.HasPrefix(addr.String(), "127.") {
 				continue
 			} else if strings.Contains(addr.String(), ":") {
@@ -72,7 +73,8 @@ func showAddr() []string {
 					panic(err)
 				}
 				//png := filepath.Join(dir1, fmt.Sprintf("fileserver-%d-%d.png", n, i))
-				png := filepath.Join(dir1, fmt.Sprintf("<%d-%d>%s.png", n, i, vs[0]))
+				png := filepath.Join(dir1, fmt.Sprintf("%s[%s].png", if1.Name, vs[0]))
+				//png := filepath.Join(dir1, fmt.Sprintf("<%d-%d>%s.png", n, i, vs[0]))
 				fmt.Println(png)
 				var addr string
 				if strings.Contains(vs[0], ":") {
